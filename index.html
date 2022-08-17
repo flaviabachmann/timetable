@@ -1,0 +1,284 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Stationboard Example - Transport API</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" />
+    <link href="/style.css?v=23" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+    <script>
+
+        $(function () {
+
+            const baseUrl = "https://transport.opendata.ch";
+
+            var station = '8503083';
+
+            function refresh() {
+                if (station) {
+                    $.get(baseUrl + '/v1/stationboard', { id: station, limit: 15 }, function (data) {
+                        $('#stationboard tbody').empty();
+                        $(data.stationboard).each(function () {
+                            var prognosis, departure, delay, line = '<tr><td>';
+                            departure = moment(this.stop.departure);
+                            if (this.stop.prognosis.departure) {
+                                prognosis = moment(this.stop.prognosis.departure);
+                                delay = (prognosis.valueOf() - departure.valueOf()) / 60000;
+                                line += departure.format('HH:mm') + ' <strong>+' + delay + ' min</strong>';
+                            } else {
+                                line += departure.format('HH:mm');
+                            }
+                            line += '</td><td>' + this.name + '</td><td>' + this.to + '</td></tr>';
+                            $('#stationboard tbody').append(line);
+                        });
+                    }, 'json');
+                }
+            }
+
+            $('#station').autocomplete({
+                source: function (request, response) {
+                    $.get(baseUrl + '/v1/locations', { query: request.term, type: 'station' }, function (data) {
+                        response($.map(data.stations, function (station) {
+                            return {
+                                label: station.name,
+                                station: station
+                            }
+                        }));
+                    }, 'json');
+                },
+                select: function (event, ui) {
+                    station = ui.item.station.id;
+                    refresh();
+                }
+            });
+
+            setInterval(refresh, 30000);
+            refresh();
+        });
+
+    </script>
+    <style>
+        h3 {
+            margin: 40px 0 20px;
+        }
+
+        .ui-widget,
+        .ui-widget input {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .ui-autocomplete {
+            text-align: left;
+        }
+
+        strong {
+            color: #d10505;
+        }
+
+        .column {
+            float: right;
+        }
+
+        .media {
+            padding-top: 30px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td,
+        th {
+            padding: 8px;
+            line-height: 18px;
+            vertical-align: top;
+            border-bottom: 1px solid #DDD;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="col-sm-8 col-sm-offset-2">
+
+            <header>
+                <h1><a href="../">Transport</a></h1>
+                <p>Swiss public transport API</p>
+            </header>
+
+            <article>
+                <p class="pull-right">
+                    <a class="btn btn-link"
+                        href="https://github.com/OpendataCH/Transport/blob/master/web/examples/stationboard.html"
+                        target="_blank">
+                        <span class="glyphicon glyphicon-new-window"></span>
+                        Source Code
+                    </a>
+                </p>
+                <h3>Stationboard Example</h3>
+                <div class="ui-widget station">
+                    <input class="form-control" id="station" value="Zürich, Römerhof" placeholder="Station" />
+                </div>
+                <div class="media">
+                </div>
+
+                <table id="stationboard">
+                    <colgroup>
+                        <col width="120">
+                        <col width="140">
+                        <col width="230">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th align="left">Zeit</th>
+                            <th>&nbsp;</th>
+                            <th align="left">Nach</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </article>
+
+            <div class="title element">
+                <div class="wrapper">
+                    <h1>IHR ÖV-ANSCHLUSS VOR ORT</h1>
+                </div>
+            </div>
+            <div class="subtitle element">
+                <div class="wrapper">
+                    <h2>Bus 33, 67 und Tram 3:<br>
+                        Bitte einsteigen!</h2>
+                </div>
+            </div>
+
+            <div class="timetable element">
+                <div class="wrapper">
+                    <div class="part"
+                        data-timetable-url="https://transport.opendata.ch/v1/stationboard?id=8591331&amp;limit=10">
+                        <div class="thead">
+                            Ihre nächste Bus Verbindung nach:<br> <b>Zürich, Dunkelhölzli</b> <br>
+                            startet in <span style="font-weight: bold;">1 Min. 34 Sek.</span></div>
+                        <div class="inner">
+                            <h2>Ab Zürich, Sackzelg</h2>
+                            <div class="abfahrt_line">
+
+                                <div>
+                                    <div class="line_title">Linie</div>
+                                    <div class="line">67 </div>
+                                </div>
+                                <div class="abfahrt">
+                                    <div>Abfahrt</div><span>21</span>.<span>39</span>
+                                </div>
+                            </div>
+                            <br>
+                            <table style="width:100%;">
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2">Ankunft:</td>
+                                    </tr>
+                                    <!-- rivets: each-entry -->
+                                    <tr>
+                                        <td>Zürich, Fellenbergstrasse</td>
+                                        <td style="text-align:right;">21:40</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Albisriederdörfli</td>
+                                        <td style="text-align:right;">21:41</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Untermoosstrasse</td>
+                                        <td style="text-align:right;">21:42</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Rautistrasse</td>
+                                        <td style="text-align:right;">21:44</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Schulhaus Buchlern</td>
+                                        <td style="text-align:right;">21:45</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Rautihalde</td>
+                                        <td style="text-align:right;">21:45</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Salzweg</td>
+                                        <td style="text-align:right;">21:46</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Dunkelhölzli</td>
+                                        <td style="text-align:right;">21:47</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="part"
+                        data-timetable-url="https://transport.opendata.ch/v1/stationboard?id=8591203&amp;limit=10">
+                        <div class="thead">
+                            Ihre nächste Tram Verbindung nach:<br> <b>Zürich, Albisrieden</b> <br>
+                            startet in <span style="font-weight: bold;">0 Min. 13 Sek.</span></div>
+                        <div class="inner">
+                            <h2>Ab Zürich, Hubertus</h2>
+                            <div class="abfahrt_line">
+
+                                <div>
+                                    <div class="line_title">Linie</div>
+                                    <div class="line">3 </div>
+                                </div>
+                                <div class="abfahrt">
+                                    <div>Abfahrt</div><span>21</span>.<span>36</span>
+                                </div>
+                            </div>
+                            <br>
+                            <table style="width:100%;">
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2">Ankunft:</td>
+                                    </tr>
+                                    <!-- rivets: each-entry -->
+                                    <tr>
+                                        <td>Zürich, Siemens</td>
+                                        <td style="text-align:right;">21:37</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Fellenbergstrasse</td>
+                                        <td style="text-align:right;">21:38</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zürich, Albisrieden</td>
+                                        <td style="text-align:right;">21:39</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                <hr>
+                <p>Powered by <a href="http://opendata.ch/">Opendata.ch</a></p>
+            </footer>
+
+        </div>
+    </div>
+
+</body>
+
+</html>
